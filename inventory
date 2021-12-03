@@ -1,0 +1,8 @@
+[all:vars]
+
+
+## my box VMs ##
+[sp_ask_dashboard_dev]
+173.255.204.142 ansible_ssh_user=root ansible_ssh_pass=no
+
+[sp_ask_dashboard_prod]
