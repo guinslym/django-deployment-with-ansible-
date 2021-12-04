@@ -1,30 +1,6 @@
 ---
 ### common
 
-- name: "install git"
-  apt:
-    name: git
-    state: latest
-  when: ansible_pkg_mgr == 'apt'
-
-
-- name: "apt install make"
-  apt:
-    name: make
-
-
-- name: "install unzip"
-  apt:
-    name: unzip
-    state: latest
-  when: ansible_pkg_mgr == 'apt'
-
-
-- name: Install ufw
-  apt:
-    name: ufw
-    update_cache: true
-
 - name : Turn on Firewall
   ufw:
     state: enabled
@@ -32,7 +8,7 @@
 
 - name : Allowing SSH port
   ufw:
-    rule: limit
+    rule: allow
     port: ssh
     proto: tcp
 
@@ -77,4 +53,3 @@
   with_items:
     - unzip /app/myproject.zip -d /app 
     - pip3 install django==2.2.20
-    - python /app/myproject/manage.py runserver
