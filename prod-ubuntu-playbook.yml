@@ -22,4 +22,5 @@
           msg: "http://{{ ansible_ssh_host }}"
 
     roles: 
-      - baseconf
+      #- baseconf
+      - copywebapp
