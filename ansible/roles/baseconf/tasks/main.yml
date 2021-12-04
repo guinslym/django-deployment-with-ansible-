@@ -18,9 +18,7 @@
             - vim
             - tree
             - unzip
-            - wget
             - ufw
-            - glances
             - python-is-python3
             - python3-pip
             - apache2
@@ -52,23 +50,6 @@
         timezone:
           name: America/Toronto
 
-      - name: Install utility packages
-        apt:
-          name:
-            - mc
-            - net-tools
-            - bsd-mailx
-            - fail2ban
-            - unattended-upgrades
-            - apt-listchanges
-            - needrestart
-            - libpam-pwquality
-            - aide
-            - haveged
-            - chrony
-            - postfix
-            - man
-          state: latest
 
 
 
