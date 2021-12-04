@@ -1,0 +1,89 @@
+---
+    - name: Run the equivalent of "apt-get update" as a separate step
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+        
+    - block:
+      - name: Install base packages
+        package:
+          name: "{{ item }}"
+          state: present
+        loop: "{{ packages }}"
+        vars:
+          packages:
+            - curl
+            - gunicorn
+            - vim
+            - tree
+            - unzip
+            - wget
+            - ufw
+            - glances
+            - python-is-python3
+            - python3-pip
+            - apache2
+            - libapache2-mod-wsgi-py3
+            - python-is-python3
+        when: ansible_pkg_mgr == 'apt'
+
+
+      - name: Remove dependencies that are no longer kequired
+        apt:
+          autoremove: yes
+          purge: yes
+
+      - name: Remove useless packages from the cache
+        apt:
+          autoclean: yes
+
+
+      - name: Create locales
+        locale_gen:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - en_US.UTF-8
+          - fr_FR.UTF-8
+        when: ansible_pkg_mgr == 'apt'
+
+      - name: Set timezone to America/Toronto
+        timezone:
+          name: America/Toronto
+
+      - name: Install utility packages
+        apt:
+          name:
+            - mc
+            - net-tools
+            - bsd-mailx
+            - fail2ban
+            - unattended-upgrades
+            - apt-listchanges
+            - needrestart
+            - libpam-pwquality
+            - aide
+            - haveged
+            - chrony
+            - postfix
+            - man
+          state: latest
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
