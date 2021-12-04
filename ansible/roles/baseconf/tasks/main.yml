@@ -23,7 +23,6 @@
             - python3-pip
             - apache2
             - libapache2-mod-wsgi-py3
-            - python-is-python3
         when: ansible_pkg_mgr == 'apt'
 
 
