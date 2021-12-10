@@ -1,0 +1,252 @@
+---
+  - name: "Playing with Ansible and Git"
+    hosts: localhost
+    connection: local
+    become: true
+    tasks:
+
+    - name: System details
+      when: ansible_distribution == 'Ubuntu' and  ansible_distribution_version == "20.04"
+      debug: msg="{{ item }}"
+      with_items:
+      - "{{ ansible_distribution }}"
+      - "{{ ansible_distribution_version }}"
+      - "{{ ansible_distribution_release  }}"
+      - #https://askubuntu.com/questions/59383/extract-part-of-a-video-with-a-one-line-command
+
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: no
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 86400 
+
+    - block:
+      - name: Install base packages
+        package:
+          name: "{{ item }}"
+          state: present
+        loop: "{{ packages }}"
+        vars:
+          packages:
+            - git
+            - vim
+            - htop
+            - tree
+            - make
+            - gcc
+            - ntp
+            - yamllint
+            - unzip
+            - sysstat
+            - curl
+            - python-is-python3
+            - ufw
+            - python3-pip
+            - build-essential
+            - libssl-dev
+            - libffi-dev
+            - libpq-dev
+            - python3-setuptools
+            - python3-venv
+            - glances
+            - zsh
+            - powerline
+            - python3-testresources
+        when: ansible_pkg_mgr == 'apt'
+
+      - name: Install django package
+        package:
+          name: "{{ item }}"
+          state: present
+        loop: "{{ packages }}"
+        vars:
+          packages:
+            - python-is-python3
+            - ufw
+            - python3-pip
+            - libssl-dev
+            - libffi-dev
+            - libpq-dev
+            - python3-setuptools
+            - python3-venv
+            - python3-testresources
+            - apache2
+            - libapache2-mod-wsgi-py3
+        when: ansible_pkg_mgr == 'apt'
+
+    - name: Install and upgrade pip
+      pip:
+        name: pip
+        extra_args: --upgrade
+        executable: pip3
+
+    - name: Installing virtualenv
+      pip:
+        name: virtualenv
+
+    - name: Manually create the initial virtualenv
+      command:
+        cmd: virtualenv /app/myenv -p python3.9
+        creates: "/app/myenv"
+
+    - name: Install multi python packages with version specifiers
+      pip:
+        name: django==2.2.20
+        virtualenv: "/app/myenv"
+        virtualenv_site_packages: yes
+
+
+    - name: Ansible copy file to remote server
+      copy:
+        src: ~/myproject
+        dest: /app/
+        
+
+    - name: Ansible copy file manage.py
+      copy:
+        src: /root/manage.py
+        dest: /app/
+        remote_src: yes
+
+    - name: Ansible copy file db.sqlite3
+      copy:
+        src: /root/db.sqlite3
+        dest: /app/
+        
+
+    - name: Ansible copy file static
+      copy:
+        src: /root/static
+        dest: /app/
+      tags:
+        - copy
+        
+
+    - name : Allowing port http (port 8000)
+      ufw :
+        rule: allow
+        port: '8000'
+        proto: tcp
+        
+
+    - command: "{{ item }}"
+      with_items:
+        - sudo ufw allow 8000
+        #- /app/myenv/bin/python3 manage.py runserver 0.0.0.0:8000
+
+
+
+    - name: install apache2
+      apt: name=apache2 update_cache=yes state=latest
+      tags:
+        - apa
+
+    - name: enabled mod_rewrite
+      apache2_module: name=rewrite state=present
+      notify:
+        - restart apache2
+      tags:
+        - apa
+
+
+    - name: Apache file configuration
+      copy:
+        src: /root/000-default.conf
+        dest: /etc/apache2/sites-enabled/000-default.conf
+      tags:
+        - copy
+      notify:
+        - restart apache2
+
+        
+    - name: Change file ownership, group and permissions for sqlite3
+      file:
+        path: /app/db.sqlite3
+        owner: www-data
+        group: www-data
+
+
+    - name: Change file ownership, group and permissions for myproject
+      file:
+        path: /app/myproject
+        owner: www-data
+        group: www-data
+
+
+    - command: "{{ item }}"
+      with_items:
+        - sudo cp /root/000-default.conf /etc/apache2/sites-enabled/000-default.conf
+        - sudo ufw delete allow 8000
+        - sudo ufw allow 'Apache Full'
+        - sudo apache2ctl configtest
+      notify:
+        - restart apache2
+
+    - name: Alternative web folder (for bot attack)
+      file:
+        path: /var/www/html2
+        state: directory
+        mode: 0755
+
+    - name: Remove dependencies that are no longer kequired
+      apt:
+        autoremove: yes
+        purge: yes
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Create locales
+      locale_gen:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - en_US.UTF-8
+        - fr_FR.UTF-8
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Set timezone to America/Toronto
+      timezone:
+        name: America/Toronto
+
+    - name: Add a setting to ~/.gitconfig
+      git_config:
+        name: alias.ci
+        scope: global
+        value: commit
+
+    - name: Add a setting to ~/.gitconfig
+      git_config:
+        name: alias.st
+        scope: global
+        value: status
+
+    - name: Remove a setting from ~/.gitconfig
+      git_config:
+        name: alias.ci
+        scope: global
+        state: absent
+
+    - name: Add a setting to ~/.gitconfig
+      git_config:
+        name: core.editor
+        scope: global
+        value: vim
+        
+    - name: Set git user.email
+      git_config:
+        name: user.email
+        scope: global
+        value: "salfjsdl@gmail.com"
+
+    - name: Set git user.name
+      git_config:
+        name: user.name
+        scope: global
+        value: "guins2000"
+
+    handlers:
+      - name: restart apache2
+        service: name=apache2 state=restarted
