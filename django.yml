@@ -159,7 +159,13 @@
       notify:
         - restart apache2
 
-        
+    - name: Check that the somefile.conf exists
+      stat:
+        path: /etc/apache2/sites-enabled/000-default.conf
+      tags:
+        - copy
+      register: stat_result
+      
     - name: Change file ownership, group and permissions for sqlite3
       file:
         path: /app/db.sqlite3
